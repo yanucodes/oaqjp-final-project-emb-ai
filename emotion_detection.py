@@ -1,5 +1,7 @@
 """Run emotion detection using Watson NLP Library API."""
+import json
 import requests
+
 
 
 URL = ("https://sn-watson-emotion.labs.skills.network/"
@@ -9,7 +11,7 @@ HEADERS = {
     }
 
 
-def emotion_detector(text_to_analyze: str) -> str:
+def run_emotion_detector(text_to_analyze: str) -> dict:
     """
     Run emotion detection using Watson NLP Library API.
 
@@ -17,8 +19,40 @@ def emotion_detector(text_to_analyze: str) -> str:
         text_to_analyze: input text string
 
     Returns:
-        A text string containing response from Watson NLP Library
+        A dictionary containing response from Watson NLP Library
     """
     input_json = {"raw_document": {"text": text_to_analyze}}
     response = requests.post(URL, json=input_json, headers=HEADERS, timeout=60)
-    return response.text
+    response_dict = json.loads(response.text)
+    return response_dict
+
+
+def find_dominant_emotion(emotions: dict) -> str:
+    """
+    Find the dominant emotion in the text.
+
+    Args:
+        emotions: dictionary with emotions as keys and their scores as values.
+
+    Returns:
+        The name of the dominant emotion.
+    """
+    return max(emotions, key=emotions.get)
+
+
+def emotion_detector(text_to_analyze: str) -> dict:
+    """
+    Detect emotions in text and return a dictionary with emotions scores and
+    a dominant emotion.
+
+    Args:
+        text_to_analyze: input text string
+
+    Returns:
+        A dictionary containing scores for each emotion and the name of
+        the dominant emotion
+    """
+    response = run_emotion_detector(text_to_analyze)
+    emotions = response['emotionPredictions'][0]['emotion']
+    emotions['dominant_emotion'] = find_dominant_emotion(emotions)
+    return emotions
