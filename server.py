@@ -11,6 +11,8 @@ def get_emotion_detector():
     text_to_analyze = request.args.get('textToAnalyze')
     # Pass the text to the emotion_detector function and store the response
     response = emotion_detector(text_to_analyze)
+    if response["dominant_emotion"] is None:
+        return "Invalid text! Please try again!"
     # Extract the labels and scores from the response
     emotion_scores = {key: value for key, value in response.items() if key != "dominant_emotion"}
     labels = list(emotion_scores.keys())
