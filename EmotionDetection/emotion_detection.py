@@ -9,6 +9,7 @@ URL = ("https://sn-watson-emotion.labs.skills.network/"
 HEADERS = {
     "grpc-metadata-mm-model-id": "emotion_aggregated-workflow_lang_en_stock"
     }
+EMOTIONS = ['anger', 'disgust', 'fear', 'joy', 'sadness', 'dominant_emotion']
 
 
 def run_emotion_detector(text_to_analyze: str) -> dict:
@@ -23,8 +24,11 @@ def run_emotion_detector(text_to_analyze: str) -> dict:
     """
     input_json = {"raw_document": {"text": text_to_analyze}}
     response = requests.post(URL, json=input_json, headers=HEADERS, timeout=60)
-    response_dict = json.loads(response.text)
-    return response_dict
+    if response.status_code == 200:
+        response_dict = json.loads(response.text)
+        return response_dict
+    else:
+        return {'emotionPredictions': None, 'status_code': response.status_code}
 
 
 def find_dominant_emotion(emotions: dict) -> str:
@@ -53,6 +57,9 @@ def emotion_detector(text_to_analyze: str) -> dict:
         the dominant emotion
     """
     response = run_emotion_detector(text_to_analyze)
-    emotions = response['emotionPredictions'][0]['emotion']
-    emotions['dominant_emotion'] = find_dominant_emotion(emotions)
+    if response['emotionPredictions'] is not None:
+        emotions = response['emotionPredictions'][0]['emotion']
+        emotions['dominant_emotion'] = find_dominant_emotion(emotions)
+    else:
+        emotions = {emotion: None for emotion in EMOTIONS}
     return emotions
